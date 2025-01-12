@@ -15,7 +15,7 @@ print(df.head())
 print(df.Tobacco.value_counts())
 df[['Tobacco', "Alcohol", "Surgery","Performance status", "HPV status (0=-, 1=+)"]] = df[['Tobacco', "Alcohol", "Surgery", "Performance status","HPV status (0=-, 1=+)"]].replace("without", 0)
 df[['Tobacco', "Alcohol", "Surgery", "Performance status",  "HPV status (0=-, 1=+)"]] = df[['Tobacco', "Alcohol", "Surgery", "Performance status", "HPV status (0=-, 1=+)"]].astype(int)
-
+#here 'without' was changed to 0, however we should treat them as missing values
 print(df.Tobacco.value_counts())
 print(df["HPV status (0=-, 1=+)"].value_counts())
 
@@ -61,6 +61,8 @@ outlier_indices, outlier_values = identify_outliers(df,"Weight")
 print(outlier_values)
 
 print(df.Gender.value_counts())
+
+#clinical feature vizualisations
 
 fig, axes = plt.subplots(2, 4, figsize=(18, 10))
 sns.histplot(ax=axes[0,0],data=df, x="Gender", hue="Gender")
