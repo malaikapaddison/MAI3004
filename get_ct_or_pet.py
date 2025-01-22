@@ -12,3 +12,6 @@ store_label_tum_all = r"D:\Virtual studio\MAI3004 test\data\labels_all"
 
 ct_files = [x for x in os.listdir(path_img) if x.split("_")[-1]=="0000.nii.gz"]
 print(ct_files)
+
+pet_files= [x for x in os.listdir(path_img) if x.split("_")[-1]=="0001.nii.gz"]
+print(pet_files)
