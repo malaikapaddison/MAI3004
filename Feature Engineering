@@ -31,3 +31,50 @@ print(f"Model Accuracy with Selected Features: {accuracy:.2f}")
 # Save the dataset with selected features
 selected_df = df[['PatientID', target_column] + list(selected_features)]
 selected_df.to_csv('All_PET_Selected.csv', index=False)
+
+# Embedded Method 
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+import pandas as pd
+
+# Define the target variable and feature set
+target_column = 'RFS'  # Set 'RFS' as the target variable
+X = df.drop(columns=['PatientID', target_column])  # Features
+y = df[target_column]  # Target variable
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train a Random Forest model
+model = RandomForestClassifier(random_state=42)
+model.fit(X_train, y_train)
+
+# Get feature importances
+feature_importances = pd.DataFrame({
+    'Feature': X.columns,
+    'Importance': model.feature_importances_
+}).sort_values(by='Importance', ascending=False)
+
+# Select top features based on importance
+n_top_features = 10  # Adjust the number of features to retain as needed
+top_features = feature_importances.head(n_top_features)['Feature'].tolist()
+
+print("Selected Top Features:")
+print(top_features)
+
+# Use only the selected features for the final dataset
+X_train_selected = X_train[top_features]
+X_test_selected = X_test[top_features]
+
+# Retrain the model using the selected features
+model.fit(X_train_selected, y_train)
+y_pred = model.predict(X_test_selected)
+
+# Evaluate the model
+from sklearn.metrics import accuracy_score
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Model Accuracy with Selected Features: {accuracy:.2f}")
+
+# Save the dataset with selected features
+selected_df = df[['PatientID', target_column] + top_features]
+selected_df.to_csv('All_PET_Embedded_Selected.csv', index=False)
