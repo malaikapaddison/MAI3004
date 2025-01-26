@@ -7,8 +7,8 @@ from sklearn.model_selection import train_test_split
 df = pd.read_csv("D:/Virtual studio/MAI3004 test/all_PET.csv")
 
 # Define the target variable and feature set
-target_column = 'RFS' 
-time_column = 'time'  
+target_column = 'Relapse' 
+time_column = 'RFS'  
 X = df.drop(columns=['PatientID', target_column, time_column])  # Features
 y = df[[time_column, target_column]]  # Target variables (time and event)
 
