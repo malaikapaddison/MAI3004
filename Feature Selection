@@ -61,5 +61,5 @@ print("Best combination of features:", best_combination)
 print("Best C-index:", best_c_index)
 
 # Save the dataset with selected features
-selected_df = df[['PatientID', target_column, time_column] + best_combination]
+selected_df = df[[target_column, time_column] + best_combination]
 selected_df.to_csv('All_PET_Selected.csv', index=False)
