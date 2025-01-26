@@ -1,0 +1,65 @@
+import pandas as pd
+import numpy as np
+from lifelines import CoxPHFitter
+from sklearn.model_selection import train_test_split
+
+# Load the dataset
+df = pd.read_csv("D:/Virtual studio/MAI3004 test/all_PET.csv")
+
+# Define the target variable and feature set
+target_column = 'RFS' 
+time_column = 'time'  
+X = df.drop(columns=['PatientID', target_column, time_column])  # Features
+y = df[[time_column, target_column]]  # Target variables (time and event)
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 1: Univariate analysis to find the top 10 features with the highest C-index
+c_index_scores = {}
+
+for feature in X.columns:
+    # Prepare a temporary dataframe with the current feature, time, and event
+    temp_df = pd.concat([X[feature], y], axis=1)
+
+    # Fit Cox proportional hazards model
+    cph = CoxPHFitter()
+    cph.fit(temp_df, duration_col=time_column, event_col=target_column)
+
+    # Store the C-index
+    c_index_scores[feature] = cph.concordance_index_
+
+# Select the top 10 features based on C-index
+top_features = sorted(c_index_scores, key=c_index_scores.get, reverse=True)[:10]
+
+# Step 2: Aggregate features one by one to find the best combination
+best_c_index = -np.inf
+best_combination = []
+current_features = []
+
+for feature in top_features:
+    # Add the current feature to the list
+    current_features.append(feature)
+
+    # Prepare a dataframe with the current combination of features, time, and event
+    temp_df = pd.concat([X[current_features], y], axis=1)
+
+    # Fit Cox proportional hazards model
+    cph = CoxPHFitter()
+    cph.fit(temp_df, duration_col=time_column, event_col=target_column)
+
+    # Calculate the C-index
+    current_c_index = cph.concordance_index_
+
+    # Check if the current combination is better
+    if current_c_index > best_c_index:
+        best_c_index = current_c_index
+        best_combination = current_features.copy()
+
+# Output the results
+print("Best combination of features:", best_combination)
+print("Best C-index:", best_c_index)
+
+# Save the dataset with selected features
+selected_df = df[['PatientID', target_column, time_column] + best_combination]
+selected_df.to_csv('All_PET_Selected.csv', index=False)
