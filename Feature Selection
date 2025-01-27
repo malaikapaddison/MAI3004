@@ -1,65 +1,60 @@
 import pandas as pd
 import numpy as np
 from lifelines import CoxPHFitter
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
+from sklearn.feature_selection import SelectKBest, mutual_info_regression
 
 # Load the dataset
 df = pd.read_csv("D:/Virtual studio/MAI3004 test/all_PET.csv")
 
 # Define the target variable and feature set
-target_column = 'Relapse' 
-time_column = 'RFS'  
+target_column = 'Relapse'
+time_column = 'RFS'
 X = df.drop(columns=['PatientID', target_column, time_column])  # Features
 y = df[[time_column, target_column]]  # Target variables (time and event)
 
-# Split the dataset into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Initialize 5-fold cross-validation
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
 
-# Step 1: Univariate analysis to find the top 10 features with the highest C-index
-c_index_scores = {}
-
-for feature in X.columns:
-    # Prepare a temporary dataframe with the current feature, time, and event
-    temp_df = pd.concat([X[feature], y], axis=1)
-
-    # Fit Cox proportional hazards model
-    cph = CoxPHFitter()
-    cph.fit(temp_df, duration_col=time_column, event_col=target_column)
-
-    # Store the C-index
-    c_index_scores[feature] = cph.concordance_index_
-
-# Select the top 10 features based on C-index
-top_features = sorted(c_index_scores, key=c_index_scores.get, reverse=True)[:10]
-
-# Step 2: Aggregate features one by one to find the best combination
+# Store results
 best_c_index = -np.inf
-best_combination = []
-current_features = []
+best_features = None
 
-for feature in top_features:
-    # Add the current feature to the list
-    current_features.append(feature)
+# Step 1: Cross-validation for feature selection and evaluation
+for train_index, val_index in kf.split(X):
+    # Split into training and validation sets
+    X_train, X_val = X.iloc[train_index], X.iloc[val_index]
+    y_train, y_val = y.iloc[train_index], y.iloc[val_index]
 
-    # Prepare a dataframe with the current combination of features, time, and event
-    temp_df = pd.concat([X[current_features], y], axis=1)
+    # Step 2: Feature selection using SelectKBest within the training fold
+    pseudo_target = y_train[target_column]  # Use the event column as a target for mutual info
+    selector = SelectKBest(score_func=mutual_info_regression, k=10)
+    X_train_selected = selector.fit_transform(X_train, pseudo_target)
 
-    # Fit Cox proportional hazards model
+    # Get selected feature names
+    selected_features = X_train.columns[selector.get_support()]
+    X_val_selected = X_val[selected_features]
+
+    # Combine selected features with target variables
+    train_df = pd.concat([X_train[selected_features], y_train], axis=1)
+    val_df = pd.concat([X_val[selected_features], y_val], axis=1)
+
+    # Step 3: Fit the Cox proportional hazards model
     cph = CoxPHFitter()
-    cph.fit(temp_df, duration_col=time_column, event_col=target_column)
+    cph.fit(train_df, duration_col=time_column, event_col=target_column)
 
-    # Calculate the C-index
-    current_c_index = cph.concordance_index_
+    # Step 4: Evaluate on the validation fold
+    val_c_index = cph.score(val_df, scoring_method="concordance_index")
 
-    # Check if the current combination is better
-    if current_c_index > best_c_index:
-        best_c_index = current_c_index
-        best_combination = current_features.copy()
+    # Track the best features and C-index
+    if val_c_index > best_c_index:
+        best_c_index = val_c_index
+        best_features = selected_features
 
 # Output the results
-print("Best combination of features:", best_combination)
-print("Best C-index:", best_c_index)
+print("Best features selected using SelectKBest during cross-validation:", best_features)
+print("Best C-index from cross-validation:", best_c_index)
 
 # Save the dataset with selected features
-selected_df = df[[target_column, time_column] + best_combination]
+selected_df = df[[target_column, time_column] + list(best_features)]
 selected_df.to_csv('All_PET_Selected.csv', index=False)
