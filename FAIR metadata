@@ -1,0 +1,20 @@
+Origin of our dataset:
+HECKTOR 2022 challenage -> we got a dataset which was used for a challenge to segment head and neck tumours and predict survival outcome in PET and CT images (and clinical data)
+
+Purpose of our dataset:
+For us the purpose was using de dataset to reproduce this challenge and see how well we could predict the survival of the included patients.
+
+License for use:
+We got access through our university and have a temporary license (which means we need to delete the data as soon as our 'project period' is over)
+
+Storing the data:
+The storing of the data does not apply to us as we will have to delete the data from all our devices and do not have the clearance to distribute the data to other researchers.
+
+How to access the data:
+The data is accessible on the HECKTOR website, it includes relevant information of what permissions are needed and how to sign up to get the dataset.
+
+Metadata (clinical data):
+The patient information includes center (9 different centers), age, gender (M/F), weight, tobacco and alcohol consumption, performance status (zubrov scale: 1-4 (describes the fittness of the patient), HPV status (vaccinated for HPV or not), treatment (radiotherapy only or additional chemotherapy and/or surgery). There can be missing values for some patients.
+
+
+
